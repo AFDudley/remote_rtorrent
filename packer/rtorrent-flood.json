@@ -15,6 +15,7 @@
     {
       "type": "shell",
       "inline": [
+        "export DEBIAN_FRONTEND=noninteractive",
         "apt-get update",
         "apt-get install -y rtorrent openssh-server curl wget",
         "mkdir -p /root/torrents/downloads",
@@ -23,7 +24,6 @@
         "echo 'session = /root/torrents/session' >> /root/.rtorrent.rc",
         "wget https://github.com/jesec/flood/releases/download/v4.9.3/flood-linux-x64.deb",
         "dpkg -i flood-linux-x64.deb",
-        "apt-get install -f -y",
         "systemctl enable ssh",
         "systemctl enable flood@root"
       ]
