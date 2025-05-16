@@ -2,30 +2,47 @@
   "variables": {
     "do_api_token": "{{env `DIGITALOCEAN_TOKEN`}}"
   },
-  "builders": [{
-    "type": "digitalocean",
-    "api_token": "{{user `do_api_token`}}",
-    "image": "debian-11-x64",
-    "region": "nyc3",
-    "size": "s-1vcpu-1gb",
-    "ssh_username": "root",
-    "snapshot_name": "remote-rtorrent-image-{{timestamp}}"
-  }],
+  "builders": [
+    {
+      "type": "digitalocean",
+      "api_token": "{{user `do_api_token`}}",
+      "image": "debian-11-x64",
+      "region": "nyc3",
+      "size": "s-1vcpu-1gb",
+      "ssh_username": "root",
+      "snapshot_name": "remote-rtorrent-image-{{timestamp}}"
+    }
+  ],
   "provisioners": [
     {
       "type": "shell",
       "inline": [
+        "#!/bin/sh -x",
         "export DEBIAN_FRONTEND=noninteractive",
-        "apt-get update",
-        "apt-get install -y rtorrent openssh-server curl wget",
-        "mkdir -p /root/torrents/downloads",
-        "mkdir -p /root/torrents/session",
-        "echo 'directory = /root/torrents/downloads' > /root/.rtorrent.rc",
-        "echo 'session = /root/torrents/session' >> /root/.rtorrent.rc",
-        "wget https://github.com/jesec/flood/releases/download/v4.9.3/flood-linux-x64.deb",
+        "apt-get update && apt-get install -y rtorrent wget",
+        "mkdir -p /root/torrents/downloads /root/torrents/session /etc/systemd/system",
+        "wget -q https://github.com/jesec/flood/releases/download/v4.9.3/flood-linux-x64.deb",
         "dpkg -i flood-linux-x64.deb",
-        "systemctl enable ssh",
-        "systemctl enable flood@root"
+        "rm flood-linux-x64.deb",
+        "apt-get clean && rm -rf /var/lib/apt/lists/*"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "config/example.rtorrent.rc",
+      "destination": "/root/.rtorrent.rc"
+    },
+    {
+      "type": "file",
+      "source": "config/etc/systemd/service/flood@.service",
+      "destination": "/etc/systemd/system/flood@.service"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "systemctl daemon-reload",
+        "systemctl enable flood@root",
+        "apt-get clean && rm -rf /var/lib/apt/lists/*"
       ]
     }
   ]

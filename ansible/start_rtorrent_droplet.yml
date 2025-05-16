@@ -1,0 +1,51 @@
+---
+# playbooks/start_rtorrent_droplet.yml
+# Usage: ansible-playbook start_rtorrent_droplet.yml -e "ssh_key=your-key-name"
+- name: Create rtorrent Droplet from Packer image
+  hosts: localhost
+  gather_facts: no
+  vars:
+    droplet_name: rtorrent-server
+    droplet_region: nyc3
+    droplet_size: s-1vcpu-1gb
+    ssh_key_name: "{{ ssh_key | default('your-ssh-key-name') }}"
+    api_token: "{{ lookup('env', 'DIGITALOCEAN_TOKEN') }}"
+  
+  tasks:
+    - name: Get available snapshots
+      community.digitalocean.digital_ocean_snapshot_info:
+        oauth_token: "{{ api_token }}"
+      register: snapshots
+
+    - name: Find most recent rtorrent snapshot
+      set_fact:
+        snapshot_id: "{{ snapshots.data | selectattr('name', 'match', 'remote-rtorrent-image') | sort(attribute='created_at') | reverse | map(attribute='id') | first }}"
+
+    - name: Get SSH key info
+      community.digitalocean.digital_ocean_sshkey_info:
+        oauth_token: "{{ api_token }}"
+      register: ssh_keys
+
+    - name: Find SSH key ID
+      set_fact:
+        ssh_key_id: "{{ ssh_keys.data | selectattr('name', 'equalto', ssh_key_name) | map(attribute='id') | first }}"
+
+    - name: Create rtorrent droplet
+      community.digitalocean.digital_ocean_droplet:
+        state: present
+        oauth_token: "{{ api_token }}"
+        name: "{{ droplet_name }}"
+        size: "{{ droplet_size }}"
+        region: "{{ droplet_region }}"
+        image: "{{ snapshot_id }}"
+        ssh_keys: ["{{ ssh_key_id }}"]
+        wait: yes
+        unique_name: yes
+      register: droplet
+
+    - name: Show connection details
+      debug:
+        msg: 
+          - "Droplet '{{ droplet_name }}' created successfully"
+          - "IP Address: {{ (droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }}"
+          - "Connect with: ssh -L 3000:localhost:3000 root@{{ (droplet.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }}"

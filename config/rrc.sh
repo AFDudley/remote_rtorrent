@@ -16,7 +16,7 @@ echo "Starting rtorrent on $REMOTE_HOST"
 echo "Monitoring for completion..."
 echo "----------------------------------------"
 # Clear any existing status file in the current directory
-ssh "$REMOTE_HOST" "rm -f ${REMOTE_STATUS_FILE}"
+ssh -o StrictHostKeyChecking=accept-new "$REMOTE_HOST" "rm -f ${REMOTE_STATUS_FILE}"
 # Start rtorrent in daemon mode
 ssh "$REMOTE_HOST" "rtorrent -o system.daemon.set=true \"${MAGNET_LINK//\"/\\\"}\"" &
 SSH_PID=$!
@@ -36,12 +36,12 @@ while true; do
         echo "Download completed! Copying files..."
         # Get the file/directory path (second line of the status file)
         FILE=$(ssh "$REMOTE_HOST" "tail -n +2 \"${REMOTE_STATUS_FILE}\" | head -n 1")
-        
+
         if [ -z "$FILE" ]; then
             echo "ERROR: No file or directory path found in status file"
             exit 1
         fi
-        
+
         echo "Copying: $FILE"
 
         # Extract just the filename for local verification
@@ -75,20 +75,20 @@ while true; do
             ssh "$REMOTE_HOST" "kill ${RTORRENT_PID}"
             echo "rtorrent has been terminated"
         fi
-        
+
         # Cleanup remote files after killing rtorrent
         echo "Cleaning up downloaded files on remote host..."
-        
+
         # Remove the downloaded file or directory
         if [ -n "${FILE}" ]; then
             ssh "${REMOTE_HOST}" "rm -rf \"${FILE}\""
             echo "Removed: ${FILE}"
-            
+
             # Remove the session directory (which includes the status file)
             ssh "$REMOTE_HOST" "rm -rf \"${REMOTE_SESSION_DIR}\""
             echo "Removed session directory"
         fi
-        
+
         break
     fi
     # Check if SSH process is still running
