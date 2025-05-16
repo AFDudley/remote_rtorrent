@@ -1,2 +1,3 @@
-jump_server = "night2"
-target_server = "root@143.198.2.66"
+storage_host = "night2"
+torrent_host = "root@143.198.2.66"
+local_dir = "~/temp"

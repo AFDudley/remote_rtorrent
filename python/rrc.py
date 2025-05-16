@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import os
+import os.path
+import re
 import sys
 import time
 import subprocess
@@ -10,16 +12,44 @@ def run_ssh_command(host, command):
                            capture_output=True, text=True)
     return result.stdout.strip(), result.returncode
 
-def main():
-    # Check arguments
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <remote_host> <magnet_link>")
-        print(f"Example: {sys.argv[0]} user@remotehost 'magnet:?xt=urn:btih:...'")
+def validate_inputs():
+    """Validate command line inputs and return validated parameters"""
+    if len(sys.argv) < 3 or len(sys.argv) > 4:
+        print(f"Usage: {sys.argv[0]} <remote_host> <magnet_link> [local_dir]")
+        print(f"Example: {sys.argv[0]} user@remotehost 'magnet:?xt=urn:btih:...' /downloads")
         sys.exit(1)
 
     remote_host = sys.argv[1]
     magnet_link = sys.argv[2]
-    local_dir = os.getcwd()
+    local_dir = sys.argv[3] if len(sys.argv) == 4 else os.getcwd()
+
+    # Sanitize local_dir
+    if local_dir:
+        # Normalize path to resolve .. and . references
+        local_dir = os.path.normpath(os.path.abspath(local_dir))
+        
+        # Check for suspicious patterns
+        if re.search(r'[;&|]', local_dir):
+            print(f"Error: Invalid characters in directory path: {local_dir}")
+            sys.exit(1)
+            
+        # Check if directory exists, create if it doesn't
+        if not os.path.exists(local_dir):
+            try:
+                os.makedirs(local_dir, exist_ok=True)
+            except Exception as e:
+                print(f"Error creating directory {local_dir}: {e}")
+                sys.exit(1)
+                
+        # Check if directory is writable
+        if not os.access(local_dir, os.W_OK):
+            print(f"Error: Directory not writable: {local_dir}")
+            sys.exit(1)
+    
+    return remote_host, magnet_link, local_dir
+
+def main():
+    remote_host, magnet_link, local_dir = validate_inputs()
 
     # Define remote paths
     remote_session_dir = "$HOME/torrents/session"
