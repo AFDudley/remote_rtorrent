@@ -1,0 +1,74 @@
+---
+# remote_torrent_download.yml
+- name: Execute rtorrent download via rrc.py
+  hosts: storage
+  gather_facts: no
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+    magnet_link: "{{ magnet_link }}"
+    storage_host_dir: "{{ storage_host_dir | default('/tmp') }}"
+
+  tasks:
+    - name: Ensure rrc.py exists locally
+      ansible.builtin.stat:
+        path: "{{ project_root }}/python/rrc.py"
+      register: rrc_script
+      delegate_to: localhost
+
+    - name: Fail if rrc.py not found
+      ansible.builtin.fail:
+        msg: "rrc.py script not found at {{ project_root }}/python/rrc.py"
+      when: not rrc_script.stat.exists
+      delegate_to: localhost
+
+    - name: Create bin directory
+      ansible.builtin.file:
+        path: ~/bin
+        state: directory
+        mode: "0755"
+
+    - name: Copy rrc.py to storage host
+      ansible.builtin.copy:
+        src: "{{ project_root }}/python/rrc.py"
+        dest: "~/bin/rrc.py"
+        mode: "0755"
+
+    - name: Get torrent host from inventory
+      ansible.builtin.set_fact:
+        torrent_host: "{{ groups['torrent'][0] }}"
+
+    - name: Test SSH connection to torrent host with agent forwarding
+      ansible.builtin.shell:
+        cmd: "ssh {{ torrent_host }} 'ip a'"
+      register: ssh_test
+
+    - name: Display SSH test results
+      ansible.builtin.debug:
+        var: ssh_test.stdout
+
+    - name: Create temporary directory
+      ansible.builtin.file:
+        path: /tmp/remote_rtorrent
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+
+    - name: Write magnet link to file with quotes
+      ansible.builtin.copy:
+        content: "'{{ magnet_link }}'"
+        dest: "/tmp/remote_rtorrent/magnet.txt"
+        mode: "0644"
+      delegate_to: localhost
+
+    - name: Copy magnet file to storage host
+      ansible.builtin.copy:
+        src: "/tmp/remote_rtorrent/magnet.txt"
+        dest: "/tmp/magnet.txt"
+        mode: "0644"
+
+    - name: Execute rrc.py with magnet from file
+      ansible.builtin.shell:
+        cmd: '~/bin/rrc.py {{ torrent_host }} "$(cat /tmp/magnet.txt)" {{ storage_host_dir }}'
+      register: rrc_output
+      environment:
+        PYTHONUNBUFFERED: '1'

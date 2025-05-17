@@ -1,4 +1,4 @@
 # Remote rtorrent configuration
 storage_host = "user@storage.example.com"
 torrent_host = "user@rtorrent.internal"
-local_dir = "/path/to/downloads"  # Optional default download directory
+storage_host_dir = "/Downloads"  # Optional default download directory

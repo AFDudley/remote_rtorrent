@@ -1,0 +1,2 @@
+https://github.com/Nuitka/Nuitka/ works to build an rrc.bin on a linux machine for a linux machine.
+I expect deploying the python file will be more parsimonious for the time being.

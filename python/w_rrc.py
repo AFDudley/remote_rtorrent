@@ -31,7 +31,13 @@ def main():
 
     storage_host_dir_arg = f" '{storage_host_dir}'" if storage_host_dir else ""
     cmd = f'ssh -A {storage_host} "~/bin/rrc.py {torrent_host} \'{magnet_link}\'{storage_host_dir_arg}"'
-    subprocess.run(cmd, shell=True)
+    
+    # Stream output in real-time
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    for line in iter(process.stdout.readline, ''):
+        print(line, end='')
+    process.stdout.close()
+    process.wait()
 
 if __name__ == "__main__":
     main()

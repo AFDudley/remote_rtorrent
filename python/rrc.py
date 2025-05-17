@@ -27,12 +27,12 @@ def validate_inputs():
     if local_dir:
         # Normalize path to resolve .. and . references
         local_dir = os.path.normpath(os.path.abspath(local_dir))
-        
+
         # Check for suspicious patterns
         if re.search(r'[;&|]', local_dir):
             print(f"Error: Invalid characters in directory path: {local_dir}")
             sys.exit(1)
-            
+
         # Check if directory exists, create if it doesn't
         if not os.path.exists(local_dir):
             try:
@@ -40,12 +40,12 @@ def validate_inputs():
             except Exception as e:
                 print(f"Error creating directory {local_dir}: {e}")
                 sys.exit(1)
-                
+
         # Check if directory is writable
         if not os.access(local_dir, os.W_OK):
             print(f"Error: Directory not writable: {local_dir}")
             sys.exit(1)
-    
+
     return remote_host, magnet_link, local_dir
 
 def main():
@@ -64,7 +64,7 @@ def main():
 
     # Start rtorrent in daemon mode
     escaped_magnet = magnet_link.replace('"', '\\"')
-    start_cmd = f'nohup rtorrent -o system.daemon.set=true "{escaped_magnet}" > /dev/null 2>&1 &'
+    start_cmd = f'nohup rtorrent -D -o system.daemon.set=true "{escaped_magnet}" > /dev/null 2>&1 &'
     stdout, ret_code = run_ssh_command(remote_host, start_cmd)
 
     # Give rtorrent time to start
