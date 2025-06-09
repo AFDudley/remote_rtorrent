@@ -1,4 +1,5 @@
 # .rtorrent.rc configuration file
+system.daemon.set = true
 # Create directories if they don't exist
 execute = {/bin/bash,-c,"mkdir -p ~/torrents/downloads ~/torrents/session"}
 # Set download and session directories
@@ -7,4 +8,4 @@ session.path.set = ~/torrents/session
 # Enable HTTP RPC support (localhost only for security)
 network.scgi.open_port = 127.0.0.1:5000
 # Set the event handler to trigger when download finishes
-method.set_key = event.download.finished, download_finished, "d.stop=; execute = {/bin/bash,-c,\"echo 'COMPLETED' > ~/torrents/session/status && cd \\\"$0\\\" && if [ -f \\\"$1\\\" ]; then realpath \\\"$1\\\" >> ~/torrents/session/status; else find \\\"$0\\\" -type f -o -type d | grep -v '^\\\"$0\\\"$' >> ~/torrents/session/status; fi\",(d.directory),(d.name)}; schedule2 = delayed_exit,1,0,\"system.shutdown\""
+method.set_key = event.download.finished, download_finished, "d.stop=; execute = {/bin/bash,-c,\"echo 'COMPLETED' > ~/torrents/session/status && cd \\\"$0\\\" && if [ -f \\\"$1\\\" ]; then realpath \\\"$1\\\" >> ~/torrents/session/status; else find \\\"$0\\\" -type f -o -type d | grep -v '^\\\"$0\\\"$' >> ~/torrents/session/status; fi\",(d.directory),(d.name)}"
