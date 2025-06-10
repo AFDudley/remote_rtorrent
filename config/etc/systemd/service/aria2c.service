@@ -1,0 +1,11 @@
+[Unit]
+Description=Aria2c Daemon
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/aria2c --daemon --conf-path=/opt/aria2/aria2.conf
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

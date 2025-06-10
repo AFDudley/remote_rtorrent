@@ -1,0 +1,12 @@
+[Unit]
+Description=AriaNg Web Server
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m http.server 8080
+WorkingDirectory=/opt/aria2/ariang
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

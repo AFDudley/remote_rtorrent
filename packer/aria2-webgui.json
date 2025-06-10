@@ -1,0 +1,55 @@
+{
+  "variables": {
+    "do_api_token": "{{env `DIGITALOCEAN_TOKEN`}}"
+  },
+  "builders": [
+    {
+      "type": "digitalocean",
+      "api_token": "{{user `do_api_token`}}",
+      "image": "debian-11-x64",
+      "region": "nyc3",
+      "size": "s-1vcpu-1gb",
+      "ssh_username": "root",
+      "snapshot_name": "remote-aria2-image-{{timestamp}}"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "#!/bin/sh -x",
+        "export DEBIAN_FRONTEND=noninteractive",
+        "apt-get update && apt-get install -y aria2 python3 wget unzip",
+        "mkdir -p /opt/aria2/downloads /opt/aria2/session /opt/aria2/ariang",
+        "wget -q https://github.com/mayswind/AriaNg/releases/latest/download/AriaNg-AllInOne.zip",
+        "unzip -q AriaNg-AllInOne.zip -d /opt/aria2/ariang/",
+        "rm AriaNg-AllInOne.zip",
+        "touch /opt/aria2/session/aria2.session",
+        "apt-get clean && rm -rf /var/lib/apt/lists/*"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "config/aria2.conf",
+      "destination": "/opt/aria2/aria2.conf"
+    },
+    {
+      "type": "file",
+      "source": "config/etc/systemd/service/aria2c.service",
+      "destination": "/etc/systemd/system/aria2c.service"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "systemctl daemon-reload",
+        "systemctl enable aria2c ariang",
+        "apt-get clean && rm -rf /var/lib/apt/lists/*"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "config/etc/systemd/service/ariang.service",
+      "destination": "/etc/systemd/system/ariang.service"
+    }
+  ]
+}
