@@ -22,7 +22,7 @@
         "export DEBIAN_FRONTEND=noninteractive",
         "apt-get update && apt-get install -y aria2 python3 wget unzip",
         "mkdir -p /opt/aria2/downloads /opt/aria2/session /opt/aria2/ariang",
-        "wget -q https://github.com/mayswind/AriaNg/releases/latest/download/AriaNg-AllInOne.zip",
+        "wget -v -O AriaNg-AllInOne.zip https://github.com/mayswind/AriaNg/releases/download/1.3.10/AriaNg-AllInOne.zip",
         "unzip -q AriaNg-AllInOne.zip -d /opt/aria2/ariang/",
         "rm AriaNg-AllInOne.zip",
         "touch /opt/aria2/session/aria2.session",
